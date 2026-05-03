@@ -1,0 +1,64 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+  "hatchling>=1.25",
+]
+
+[project]
+name = "hope-jarvis"
+version = "0.1.0"
+description = "HOPE Jarvis - RAG Bot for UNICEF HOPE documentation"
+readme = "README.md"
+authors = [
+  { name = "Stefano Apostolico", email = "s.apostolico@gmail.com" },
+]
+requires-python = ">=3.13"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
+dependencies = [
+  "chainlit>=2.2",
+  "click>=8",
+  "fastembed>=0.4",
+  "gitpython>=3.1",
+  "langchain-community>=0.3",
+  "langchain-core>=0.3",
+  "langchain-ollama>=0.2",
+  "langchain-text-splitters>=0.3",
+  "pyyaml>=6",
+  "qdrant-client>=1.12",
+  "sentry-sdk>=2",
+  "uvicorn>=0.46",
+]
+
+scripts.jarvis = "hope_jarvis.cli:jarvis"
+scripts.webhook = "hope_jarvis.webhook:main"
+
+[dependency-groups]
+dev = [
+  "diff-cover",
+  "factory-boy>=3.3",
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.6",
+  "mypy>=1",
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6",
+  "ruff>=0.15.12",
+  "tox>=4.53",
+]
+mypy = [
+  "mypy>=1.9",
+]
+
+[tool.hatch.build.targets.sdist]
+only-include = [ "src/hope_jarvis" ]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/hope_jarvis" ]
+
+[tool.coverage.run]
+source = [ "hope_jarvis" ]
+omit = [ "*/tests/*", "*/.venv/*" ]
+
+[tool.coverage.report]
+fail_under = 77
+show_missing = true

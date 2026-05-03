@@ -1,0 +1,23 @@
+#header {
+
+  background-color: hsl(199, 98.36%, 47.84%);
+  color: white;
+
+  a span, button {
+    color: white;
+  }
+
+  button {
+    &:hover {
+      background-color: hsl(199, 100%, 45%);
+
+    }
+  }
+}
+
+#chat-submit {
+  background-color: hsl(199, 98.36%, 47.84%);
+  color: white;
+  opacity: 100;
+
+}

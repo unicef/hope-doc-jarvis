@@ -1,0 +1,18 @@
+#header {
+  background-color: hsl(199, 98.36%, 47.84%);
+  color: white;
+}
+#header a span, #header button {
+  color: white;
+}
+#header button:hover {
+  background-color: hsl(199, 100%, 45%);
+}
+
+#chat-submit {
+  background-color: hsl(199, 98.36%, 47.84%);
+  color: white;
+  opacity: 100;
+}
+
+/*# sourceMappingURL=hope.css.map */

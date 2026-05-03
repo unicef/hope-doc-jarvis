@@ -1,0 +1,45 @@
+# GitHub repositories to index
+repos:
+  - name: "HOPE"
+    github_url: "https://github.com/unicef/hope"
+    docs_dir: "docs"
+    branch: "develop"
+    rendered_base_url: "https://unicef.github.io/hope/"
+    local_path: "repos/hope"
+
+  - name: "Country Report"
+    github_url: "https://github.com/unicef/hope-country-report"
+    docs_dir: "docs"
+    branch: "main"
+    rendered_base_url: "https://unicef.github.io/hope-country-report/"
+    local_path: "repos/country-report"
+
+  - name: "Country Workspace"
+    github_url: "https://github.com/unicef/hope-country-workspace"
+    docs_dir: "docs"
+    branch: "main"
+    rendered_base_url: "https://unicef.github.io/hope-country-workspace/"
+    local_path: "repos/country-workspace"
+
+  - name: "Aurora"
+    github_url: "https://github.com/unicef/hope-aurora"
+    docs_dir: "docs"
+    branch: "main"
+    rendered_base_url: "https://unicef.github.io/hope-aurora/"
+    local_path: "repos/aurora"
+
+  - name: "Deduplication Engine"
+    github_url: "https://github.com/unicef/hope-dedup-engine"
+    docs_dir: "docs"
+    branch: "main"
+    rendered_base_url: "https://unicef.github.io/hope-dedup-engine"
+    local_path: "repos/aurora"
+
+  - name: "Payment Gateway"
+    github_url: "https://github.com/unicef/hope-payment-gateway"
+    docs_dir: "docs"
+    branch: "main"
+    rendered_base_url: "https://unicef.github.io/hope-payment-gateway"
+    local_path: "repos/aurora"
+
+# Add more repos as needed

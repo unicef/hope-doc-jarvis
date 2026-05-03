@@ -1,0 +1,11 @@
+.*
+~*
+*.sh
+!.ai
+!.github
+!.gitignore
+!.dockerignore
+!docker/*
+!docker/app/.chainlit/**
+src/hope_jarvis/version.py
+coverage.xml
