@@ -1,0 +1,86 @@
+name: Lint
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [ synchronize, opened, reopened, ready_for_review ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.ini'
+      - '*.toml'
+
+defaults:
+  run:
+    shell: bash
+
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: check files
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      lint: ${{ steps.changes.outputs.lint }}
+      mypy: ${{ steps.changes.outputs.mypy }}
+      package: ${{ steps.changes.outputs.package }}
+    steps:
+      - run: git config --global --add safe.directory $(realpath .)
+      - uses: actions/checkout@v4
+      - id: changes
+        name: Check for backend file changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          token: ${{ github.token }}
+          filters: .github/file-filters.yml
+
+  lint:
+    needs: changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && needs.changes.outputs.lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13.1'
+      - run: pip install tox
+      - name: Static Code checks
+        run: tox -e lint
+
+  mypy:
+    needs: changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && needs.changes.outputs.mypy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13.1'
+      - run: pip install tox==4.26.0
+      - name: Check Python Package structure
+        run: |
+          tox -re mypy
+
+  package:
+    needs: changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && needs.changes.outputs.lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13.1'
+      - run: pip install tox
+      - name: Check Python Package structure
+        run: tox -e pkg_meta
