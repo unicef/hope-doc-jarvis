@@ -1,5 +1,4 @@
 import re
-from typing import Dict
 
 
 def build_metadata(
@@ -11,7 +10,7 @@ def build_metadata(
     content: str,
     chunk_index: int,
     branch: str = "main",
-) -> Dict:
+) -> dict:
     """Build metadata dict for a chunk."""
     # Construct raw GitHub URL with configurable branch
     raw_url = f"{github_url.replace('github.com', 'raw.githubusercontent.com')}/{branch}/{file_path}"

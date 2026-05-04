@@ -1,6 +1,6 @@
 """Response generation module."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from hope_jarvis.config import (
     get_ollama_base_url,
@@ -60,13 +60,10 @@ User question: {question}""",
         ]
     )
 
-    chain = prompt | llm | StrOutputParser()
-    return chain
+    return prompt | llm | StrOutputParser()
 
 
-def generate_response(
-    query: str, relevant_chunks: List[Dict[str, Any]], config: dict = None
-) -> str:
+def generate_response(query: str, relevant_chunks: list[dict[str, Any]], config: dict = None) -> str:
     """Generate response using LLM with context."""
     if config is None:
         config = {"ollama": _build_ollama_config()}
@@ -83,14 +80,10 @@ def generate_response(
     context = "\n\n---\n\n".join(context_parts)
 
     # Generate response
-    response = chain.invoke({"context": context, "question": query})
-
-    return response
+    return chain.invoke({"context": context, "question": query})
 
 
-def generate_response_stream(
-    query: str, relevant_chunks: List[Dict[str, Any]], config: dict = None
-):
+def generate_response_stream(query: str, relevant_chunks: list[dict[str, Any]], config: dict = None):
     """Generate streaming response using LLM with context."""
     if config is None:
         config = {"ollama": _build_ollama_config()}
@@ -107,5 +100,4 @@ def generate_response_stream(
     context = "\n\n---\n\n".join(context_parts)
 
     # Stream response
-    for token in chain.stream({"context": context, "question": query}):
-        yield token
+    yield from chain.stream({"context": context, "question": query})

@@ -39,10 +39,7 @@ class TestBuildMetadata:
         )
 
         assert "raw.githubusercontent.com" in metadata["raw_github_url"]
-        assert (
-            metadata["raw_github_url"]
-            == "https://raw.githubusercontent.com/unicef/hope/main/docs/guide.md"
-        )
+        assert metadata["raw_github_url"] == "https://raw.githubusercontent.com/unicef/hope/main/docs/guide.md"
 
     def test_rendered_url_removes_docs_dir(self):
         """Test that docs_dir is removed from rendered URL."""
@@ -56,10 +53,7 @@ class TestBuildMetadata:
             chunk_index=0,
         )
 
-        assert (
-            metadata["rendered_html_url"]
-            == "https://unicef.github.io/hope/guide-user/targeting/"
-        )
+        assert metadata["rendered_html_url"] == "https://unicef.github.io/hope/guide-user/targeting/"
 
     def test_rendered_url_index_file(self):
         """Test that index files produce clean URLs."""

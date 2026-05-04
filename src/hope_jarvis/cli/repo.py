@@ -2,13 +2,13 @@
 
 import click
 
-from hope_jarvis.ingestion import sync_all_repos, sync_repo_by_name
+from hope_jarvis.config import get_all_repo_names, get_repos_config
+from hope_jarvis.ingestion import sync_repo_by_name
 
 
 @click.group()
 def repo():
-    """Git Repositories management"""
-    pass
+    """Git Repositories management."""
 
 
 @repo.command()
@@ -28,6 +28,7 @@ def pull(repos, force):
       jarvis repo pull -r HOPE            # Sync single repo
       jarvis repo pull -r HOPE -r Aurora  # Sync multiple repos
       jarvis repo pull --force            # Force re-sync all repos
+
     """
     if repos:
         msg = f"Syncing repos: {', '.join(repos)}"
@@ -36,16 +37,19 @@ def pull(repos, force):
     if force:
         msg += " (force)"
     click.echo(msg)
-
+    repos_config_path = get_repos_config()
+    click.echo(f"Using config: {repos_config_path}")
     # Pull repos
-    if repos:
-        changed_files = []
-        for repo_name in repos:
-            click.echo(f"Syncing repo: {repo_name}")
-            changed = sync_repo_by_name(repo_name, force=force)
-            changed_files.extend(changed)
+    if not repos:
+        targets = get_all_repo_names()
     else:
-        changed_files = sync_all_repos(force=force)
+        targets = repos
+    changed_files = []
+
+    for repo_name in targets:
+        click.echo(f"Syncing repo: {repo_name}")
+        changed = sync_repo_by_name(repo_name, force=force)
+        changed_files.extend(changed)
 
     click.echo(f"Found {len(changed_files)} changed files.")
 

@@ -27,9 +27,7 @@ class TestGetQdrantConfig:
         return_value="test-model",
     )
     @patch("hope_jarvis.ingestion.store.get_embedding_vector_size", return_value=384)
-    def test_returns_correct_config(
-        self, mock_size, mock_model, mock_collection, mock_url
-    ):
+    def test_returns_correct_config(self, mock_size, mock_model, mock_collection, mock_url):
         """Test that config is returned correctly."""
         qdrant_config, embedding_config = _get_qdrant_config()
 
@@ -87,9 +85,7 @@ class TestStoreChunksInQdrant:
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_stores_single_chunk(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_stores_single_chunk(self, mock_config, mock_embedding_class, mock_client_class):
         """Test storing a single chunk."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "test-collection"},
@@ -121,9 +117,7 @@ class TestStoreChunksInQdrant:
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_stores_multiple_chunks(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_stores_multiple_chunks(self, mock_config, mock_embedding_class, mock_client_class):
         """Test storing multiple chunks."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "test-collection"},
@@ -156,47 +150,28 @@ class TestStoreChunksInQdrant:
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_uses_custom_url_and_collection(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_uses_custom_url_and_collection(self, mock_config, mock_embedding_class, mock_client_class):
         """Test that custom URL and collection name are used."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "default-collection"},
             {"model_name": "test-model", "vector_size": 384},
         )
-
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-
-        mock_embedding = MagicMock()
-        mock_embedding.embed.return_value = [MagicMock()]
-        mock_embedding_class.return_value = mock_embedding
+        mock_embedding_instance = MagicMock()
+        mock_embedding_instance.embed.return_value = [[0.1, 0.2, 0.3]]
+        mock_embedding_class.return_value = mock_embedding_instance
 
         chunks = [
-            {
-                "content": "test content",
-                "metadata": {
-                    "repo_name": "HOPE",
-                    "file_path": "docs/test.md",
-                    "chunk_index": 0,
-                },
-            }
+            {"content": "Test content", "metadata": {"repo_name": "test", "file_path": "test.md", "chunk_index": 0}}
         ]
 
-        store_chunks_in_qdrant(
-            chunks,
-            qdrant_url="http://custom:6333",
-            collection_name="custom-collection",
-        )
+        store_chunks_in_qdrant(chunks, qdrant_url="http://custom:6333", collection_name="custom-collection")
 
-        mock_client_class.assert_called_once_with(url="http://custom:6333", api_key="")
+        mock_client_class.assert_called_once_with(url="http://custom:6333", api_key=None)
 
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_batches_large_number_of_chunks(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_batches_large_number_of_chunks(self, mock_config, mock_embedding_class, mock_client_class):
         """Test that large number of chunks are batched."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "test-collection"},
@@ -230,9 +205,7 @@ class TestStoreChunksInQdrant:
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_generates_consistent_point_ids(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_generates_consistent_point_ids(self, mock_config, mock_embedding_class, mock_client_class):
         """Test that point IDs are generated consistently."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "test-collection"},
@@ -267,9 +240,7 @@ class TestStoreChunksInQdrant:
     @patch("hope_jarvis.ingestion.store.QdrantClient")
     @patch("hope_jarvis.ingestion.store.TextEmbedding")
     @patch("hope_jarvis.ingestion.store._get_qdrant_config")
-    def test_stores_payload_with_content_and_metadata(
-        self, mock_config, mock_embedding_class, mock_client_class
-    ):
+    def test_stores_payload_with_content_and_metadata(self, mock_config, mock_embedding_class, mock_client_class):
         """Test that payload contains content and metadata."""
         mock_config.return_value = (
             {"url": "http://localhost:6333", "collection_name": "test-collection"},

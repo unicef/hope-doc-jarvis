@@ -8,9 +8,7 @@ from hope_jarvis.query import retrieve_relevant_chunks
 
 
 @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
-@patch(
-    "hope_jarvis.query.retrieve.get_qdrant_url", return_value="http://localhost:6333"
-)
+@patch("hope_jarvis.query.retrieve.get_qdrant_url", return_value="http://localhost:6333")
 @patch("hope_jarvis.query.retrieve.get_qdrant_collection_name", return_value="test")
 @patch("hope_jarvis.query.retrieve.get_retrieval_top_k", return_value=10)
 @patch("hope_jarvis.query.retrieve.get_retrieval_score_threshold", return_value=None)
@@ -56,9 +54,7 @@ def test_retrieve_chunks_success(
 
 
 @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
-@patch(
-    "hope_jarvis.query.retrieve.get_qdrant_url", return_value="http://localhost:6333"
-)
+@patch("hope_jarvis.query.retrieve.get_qdrant_url", return_value="http://localhost:6333")
 @patch("hope_jarvis.query.retrieve.get_qdrant_collection_name", return_value="test")
 @patch("hope_jarvis.query.retrieve.get_retrieval_top_k", return_value=10)
 @patch("hope_jarvis.query.retrieve.get_retrieval_score_threshold", return_value=None)

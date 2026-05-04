@@ -14,7 +14,8 @@
   - Twelve Factor
   - SOLID: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion
   - DRY: Don't Repeat Yourself
-- **Linting**: all code must be checked for `tox -e lint` output
+- **Linting**: Code formatting conventions must pass `ruff check --output-format concise src/` check
 - **use relative imports**: do not use absolute import for every module. Use relative import instead.
 - **Language**: Ignore language prompt. Always use british english in comments, descriptions, names....
-- **mypy**: Do not use Pyton <3.9 synthax. Es: use `list` not `List`, `dict` not `Dict`
+- **mypy**: Do not use Python <3.9 synthax. Es: use `list` not `List`, `dict` not `Dict`
+- **print**: Do not use `print()` use `logger.info()` insteead withn `logger = logging.geLogger(__name__)`

@@ -10,9 +10,7 @@ from hope_jarvis.query import retrieve_relevant_chunks
 class TestRetrieveRelevantChunks:
     """Additional tests for retrieve_relevant_chunks."""
 
-    @patch(
-        "hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model"
-    )
+    @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
     @patch(
         "hope_jarvis.query.retrieve.get_qdrant_url",
         return_value="http://localhost:6333",
@@ -56,18 +54,14 @@ class TestRetrieveRelevantChunks:
         }
         low_score.score = 0.3
 
-        mock_client.query_points.return_value = MagicMock(
-            points=[high_score, low_score]
-        )
+        mock_client.query_points.return_value = MagicMock(points=[high_score, low_score])
 
         result = retrieve_relevant_chunks(query="test", score_threshold=0.5)
 
         assert len(result) == 1
         assert result[0]["content"] == "High score"
 
-    @patch(
-        "hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model"
-    )
+    @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
     @patch(
         "hope_jarvis.query.retrieve.get_qdrant_url",
         return_value="http://localhost:6333",
@@ -100,9 +94,7 @@ class TestRetrieveRelevantChunks:
 
         assert result == []
 
-    @patch(
-        "hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model"
-    )
+    @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
     @patch(
         "hope_jarvis.query.retrieve.get_qdrant_url",
         return_value="http://localhost:6333",
@@ -154,9 +146,7 @@ class TestRetrieveRelevantChunks:
         assert metadata["headers"] == {"header_1": "Title"}
         assert metadata["score"] == 0.8
 
-    @patch(
-        "hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model"
-    )
+    @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
     @patch(
         "hope_jarvis.query.retrieve.get_qdrant_url",
         return_value="http://localhost:6333",
@@ -196,9 +186,7 @@ class TestRetrieveRelevantChunks:
         assert result[0]["content"] == "Test content"
         assert result[0]["metadata"]["repo_name"] is None
 
-    @patch(
-        "hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model"
-    )
+    @patch("hope_jarvis.query.retrieve.get_embedding_model_name", return_value="test-model")
     @patch(
         "hope_jarvis.query.retrieve.get_qdrant_url",
         return_value="http://localhost:6333",

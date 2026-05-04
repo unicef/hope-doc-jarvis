@@ -22,9 +22,7 @@ class TestBuildOllamaConfig:
     @patch("hope_jarvis.query.generate.get_ollama_model", return_value="llama3")
     @patch("hope_jarvis.query.generate.get_ollama_temperature", return_value=0.5)
     @patch("hope_jarvis.query.generate.get_ollama_streaming", return_value=True)
-    def test_builds_config_correctly(
-        self, mock_streaming, mock_temp, mock_model, mock_url
-    ):
+    def test_builds_config_correctly(self, mock_streaming, mock_temp, mock_model, mock_url):
         """Test that config is built correctly."""
         config = _build_ollama_config()
 
@@ -86,9 +84,7 @@ class TestGenerateResponse:
 
     @patch("hope_jarvis.query.generate.create_llm_chain")
     @patch("hope_jarvis.query.generate._build_ollama_config")
-    def test_generates_response_without_config(
-        self, mock_build_config, mock_chain_creator
-    ):
+    def test_generates_response_without_config(self, mock_build_config, mock_chain_creator):
         """Test generating a response without config (uses defaults)."""
         mock_build_config.return_value = {
             "base_url": "http://localhost:11434",

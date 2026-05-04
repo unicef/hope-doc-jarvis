@@ -177,7 +177,7 @@ class TestCheckEnv:
             "QDRANT_COLLECTION_NAME": "test",
             "EMBEDDING_MODEL_NAME": "test-model",
             "CONFIG_PATH": "/tmp",
-            "DATA_PATH": "/tmp",
+            "DATA_DIR": "/tmp",
         }
         with patch.dict("os.environ", env_vars, clear=True):
             from hope_jarvis.app import _check_env
@@ -189,11 +189,8 @@ class TestCheckEnv:
         with patch.dict("os.environ", {}, clear=True):
             from hope_jarvis.app import _check_env
 
-            try:
+            with pytest.raises(RuntimeError, match="Missing env vars"):
                 _check_env()
-                assert False, "Should have raised RuntimeError"
-            except RuntimeError as e:
-                assert "Missing env vars" in str(e)
 
 
 class TestStart:
@@ -209,18 +206,12 @@ class TestStart:
 
         try:
             with patch("hope_jarvis.app._check_env"):
-                with patch(
-                    "hope_jarvis.app._build_config", return_value={"test": "config"}
-                ):
-                    with patch(
-                        "hope_jarvis.app.load_prompts", return_value={"persona": "test"}
-                    ):
+                with patch("hope_jarvis.app._build_config", return_value={"test": "config"}):
+                    with patch("hope_jarvis.app.load_prompts", return_value={"persona": "test"}):
                         await app_module.start()
 
             mock_chainlit.user_session.set.assert_any_call("config", {"test": "config"})
-            mock_chainlit.user_session.set.assert_any_call(
-                "prompts", {"persona": "test"}
-            )
+            mock_chainlit.user_session.set.assert_any_call("prompts", {"persona": "test"})
         finally:
             app_module.cl = original_cl
 
@@ -255,9 +246,7 @@ class TestMain:
 
                 await app_module.main(message)
 
-            mock_chainlit.Message.assert_called_with(
-                content="Sorry, I cannot help you on this topic."
-            )
+            mock_chainlit.Message.assert_called_with(content="Sorry, I cannot help you on this topic.")
         finally:
             app_module.cl = original_cl
 
@@ -328,12 +317,8 @@ class TestRunIngestion:
             }
 
             with patch("hope_jarvis.app.sync_all_repos", return_value=[]):
-                with patch(
-                    "hope_jarvis.app.get_ingestion_chunk_size", return_value=1000
-                ):
-                    with patch(
-                        "hope_jarvis.app.get_ingestion_chunk_overlap", return_value=200
-                    ):
+                with patch("hope_jarvis.app.get_ingestion_chunk_size", return_value=1000):
+                    with patch("hope_jarvis.app.get_ingestion_chunk_overlap", return_value=200):
                         result = await app_module.run_ingestion()
 
                         assert result == "Nessun file aggiornato."

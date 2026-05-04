@@ -1,6 +1,6 @@
 """Qdrant storage module. 12-Factor: config from env vars."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
@@ -38,19 +38,16 @@ def init_qdrant_collection():
     if qdrant_config["collection_name"] not in collection_names:
         client.create_collection(
             collection_name=qdrant_config["collection_name"],
-            vectors_config=VectorParams(
-                size=embedding_config["vector_size"], distance=Distance.COSINE
-            ),
+            vectors_config=VectorParams(size=embedding_config["vector_size"], distance=Distance.COSINE),
         )
-        print(f"Created collection: {qdrant_config['collection_name']}")
     else:
-        print(f"Collection already exists: {qdrant_config['collection_name']}")
+        pass
 
     return client
 
 
 def store_chunks_in_qdrant(
-    chunks: List[Dict[str, Any]],
+    chunks: list[dict[str, Any]],
     qdrant_url: str = None,
     collection_name: str = None,
 ) -> None:
@@ -84,5 +81,3 @@ def store_chunks_in_qdrant(
     for i in range(0, len(points), batch_size):
         batch = points[i : i + batch_size]
         client.upsert(collection_name=collection_name, points=batch)
-
-    print(f"Stored {len(points)} chunks in Qdrant")

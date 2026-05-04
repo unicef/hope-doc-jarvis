@@ -101,10 +101,7 @@ def test_build_metadata_rendered_url():
         chunk_index=0,
     )
 
-    assert (
-        metadata["rendered_html_url"]
-        == "https://unicef.github.io/hope/guide-user/targeting/"
-    )
+    assert metadata["rendered_html_url"] == "https://unicef.github.io/hope/guide-user/targeting/"
     assert metadata["repo_name"] == "HOPE"
     assert metadata["file_path"] == "guide-user/targeting.md"
 
@@ -121,9 +118,7 @@ def test_build_metadata_rendered_url_index():
         chunk_index=0,
     )
 
-    assert "index" not in metadata["rendered_html_url"] or metadata[
-        "rendered_html_url"
-    ].endswith("/")
+    assert "index" not in metadata["rendered_html_url"] or metadata["rendered_html_url"].endswith("/")
 
 
 def test_get_file_hash():
@@ -161,15 +156,14 @@ def test_find_markdown_files(tmp_path):
 
 @patch("hope_jarvis.ingestion.sync.Repo")
 def test_clone_or_pull_repo_existing(mock_repo):
-    """Test pulling existing repo."""
+    """Test pulling existing repo with reset --hard."""
     mock_repo.return_value.remotes.origin.pull.return_value = None
 
     with patch("hope_jarvis.config._require_env", return_value="/tmp/test_data"):
         with patch("pathlib.Path.exists", return_value=True):
-            result = clone_or_pull_repo(
-                {"github_url": "https://github.com/test/repo", "name": "test"}
-            )
+            result = clone_or_pull_repo({"github_url": "https://github.com/test/repo", "name": "test"})
 
+            mock_repo.return_value.git.reset.assert_called_once_with("--hard")
             assert result is not None
 
 

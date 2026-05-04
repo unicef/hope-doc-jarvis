@@ -15,9 +15,7 @@ class TestConfig:
     def test_require_env_missing(self):
         """Test that missing env var raises error."""
         with patch.dict("os.environ", {}, clear=True):
-            with pytest.raises(
-                EnvironmentError, match="Missing required env var: TEST_VAR"
-            ):
+            with pytest.raises(EnvironmentError, match="Missing required env var: TEST_VAR"):
                 config._require_env("TEST_VAR")
 
     def test_require_env_present(self):
@@ -160,7 +158,7 @@ class TestConfig:
 
     def test_get_data_path(self):
         """Test get_data_path."""
-        with patch.dict("os.environ", {"DATA_PATH": "/tmp/data"}):
+        with patch.dict("os.environ", {"DATA_DIR": "/tmp/data"}):
             assert config.get_data_path() == Path("/tmp/data")
 
     def test_get_data_path_default(self):
