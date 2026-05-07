@@ -6,9 +6,9 @@ on:
     types: [published]
   push:
     branches:
-      - '**'  # Trigger on push to any branch
-    tags:
-      - '*'    # Trigger on push to any tag
+      - 'main'  # Trigger on push to any branch
+#    tags:
+#      - '*'    # Trigger on push to any tag
   workflow_dispatch:
     inputs:
       git_reference:
