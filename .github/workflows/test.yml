@@ -101,20 +101,3 @@ jobs:
     - name: Run Test suite
       run: |
         uv run tox -e tests
-
-    - name: Upload test results to Codecov
-      uses: codecov/test-results-action@v1
-      if: "${{ secrets.CODECOV_TOKEN }}" != ""
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
-      if: "${{ secrets.CODECOV_TOKEN }}" != ""
-      continue-on-error: false
-      with:
-        env_vars: OS,PYTHON
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
-        verbose: false
-        name: codecov-${{ github.ref_name }}
