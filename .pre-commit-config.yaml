@@ -1,0 +1,59 @@
+
+repos:
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: "e732f664aa3fd7b32cce3de8abbac43f4c3c375d"  # frozen: 1.5.0
+    hooks:
+      - id: tox-ini-fmt
+        args: [ "-p", "lint" ]
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "57b6ff7bf72affdd12c7f3fd6de761ba18a33b3a"  # frozen: v2.5.1
+    hooks:
+      - id: pyproject-fmt
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff
+      - id: ruff-format
+        args:
+          - --check
+
+#  - repo: https://github.com/returntocorp/semgrep
+#    rev: v1.157.0
+#    hooks:
+#      - id: semgrep
+#        exclude: '(\.semgrep/|docs/)'
+#        exclude_types:
+#          - yaml
+#        args:
+#          - scan
+#          - --config
+#          - .semgrep/
+#          # Do not try to scan '.semgrep/' directories as they contain test files
+#          # thus they will trigger findings.
+#          - --exclude=.semgrep/
+#          - --exclude=docs/_scripts/
+#          # Do not check for version updates, it slows down the execution.
+#          - --disable-version-check
+#          # Quiet mode in order to not pollute the pre-commit outputs.
+#          # Replace --quiet with --verbose to debug issues.
+#          - --quiet
+
+  - repo: https://github.com/saxix/pch
+    rev: '0.6'
+    hooks:
+      - id: check-forbidden
+        name: check pyproject to avoid editable sources/deps
+        files: pyproject.toml
+        language: python
+        args:
+          - -p
+          - /\[tool\.uv\.sources\]\s/s

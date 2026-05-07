@@ -7,5 +7,6 @@
 !.dockerignore
 !docker/app/**/*
 !.coveragerc
+!.pre-commit-config.yaml
 src/hope_jarvis/version.py
 coverage.xml
