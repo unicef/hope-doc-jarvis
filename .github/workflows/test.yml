@@ -102,22 +102,15 @@ jobs:
       run: |
         uv run tox -e tests
 
-    - name: Archive selenium results
-      uses: actions/upload-artifact@v7
-      if: failure()
-      with:
-        name: selenium-log-report
-        path: latest_logs
-        retention-days: 5
-
     - name: Upload test results to Codecov
       uses: codecov/test-results-action@v1
-      if: always()
+      if: "${{ secrets.CODECOV_TOKEN }}" != ""
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v6
+      if: "${{ secrets.CODECOV_TOKEN }}" != ""
       continue-on-error: false
       with:
         env_vars: OS,PYTHON
