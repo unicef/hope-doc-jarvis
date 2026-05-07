@@ -1,28 +1,18 @@
-# jarvis pull / jarvis sync
+# jarvis repo pull
 
-HOPE Bot provides two commands for updating repositories: `pull` for git operations only, and `sync` for the complete workflow (pull + Qdrant ingestion).
+Pull or clone repositories and ingest changed files into Qdrant (pull + db update).
 
-## Commands
+## Command
 
-### jarvis pull
-
-Pull or clone repositories (git operations only, no Qdrant ingestion).
-
-```bash
-jarvis pull [OPTIONS]
-```
-
-### jarvis sync
+### jarvis repo pull
 
 Sync repositories and ingest changed files (pull + Qdrant ingestion).
 
 ```bash
-jarvis sync [OPTIONS]
+jarvis repo pull [OPTIONS]
 ```
 
 ## Options
-
-Both commands accept the same options:
 
 | Option | Description |
 |--------|-------------|
@@ -31,28 +21,13 @@ Both commands accept the same options:
 
 ## Default Behavior
 
-**All commands work on all configured repositories by default.** Use `-r`/`--repo` to limit operations to specific repos.
+**Works on all configured repositories by default.** Use `-r`/`--repo` to limit operations to specific repos.
 
 ## Examples
 
-### Pull All Repositories (Git Only)
-```bash
-jarvis pull
-```
-
-Clones or pulls all repositories from GitHub to `DATA_PATH`.
-
-### Pull Specific Repositories
-```bash
-jarvis pull -r HOPE
-jarvis pull -r HOPE -r Aurora
-```
-
-Pulls only the specified repositories.
-
 ### Sync All Repositories (Pull + Ingest)
 ```bash
-jarvis sync
+jarvis repo pull
 ```
 
 Complete workflow for all repos:
@@ -64,17 +39,16 @@ Complete workflow for all repos:
 
 ### Sync Specific Repositories
 ```bash
-jarvis sync -r HOPE
-jarvis sync -r HOPE -r Aurora
+jarvis repo pull -r HOPE
+jarvis repo pull -r HOPE -r Aurora
 ```
 
 Syncs only the specified repositories.
 
 ### Force Operations
 ```bash
-jarvis pull --force              # Force re-pull all repos
-jarvis sync --force              # Force re-sync all repos
-jarvis sync -r HOPE --force     # Force re-sync specific repo
+jarvis repo pull --force              # Force re-sync all repos
+jarvis repo pull -r HOPE --force     # Force re-sync specific repo
 ```
 
 Ignores sync state and re-processes all files. Useful after:
@@ -82,17 +56,18 @@ Ignores sync state and re-processes all files. Useful after:
 - Modifying chunk settings
 - Debugging ingestion issues
 
-## How jarvis sync Works
+## How jarvis repo pull Works
 
 1. **Pull**: Clones or pulls repositories to `DATA_PATH`
 2. **Detect Changes**: Compares file hashes with sync state
 3. **Chunk**: Splits markdown files using header-aware chunking
+   - Extracts YAML frontmatter (title, tags, etc.) and adds to metadata
+   - Converts `<glossary:TERM>` references to `TERM` in content
 4. **Embed**: Generates vector embeddings using the configured model
-5. **Store**: Upserts chunks into Qdrant with metadata
+5. **Store**: Upserts chunks into Qdrant with metadata (including frontmatter)
 
 ## Notes
 
-- The Qdrant collection is automatically created if it doesn't exist (only `jarvis sync`)
+- The Qdrant collection is automatically created if it doesn't exist
 - Only markdown files in the configured `docs_dir` are processed
 - Sync state is stored in `CONFIG_PATH/sync_state.json`
-- `jarvis pull` only performs git operations, no Qdrant ingestion

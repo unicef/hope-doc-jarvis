@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 scripts.jarvis = "hope_jarvis.cli:jarvis"
-scripts.webhook = "hope_jarvis.webhook:main"
+scripts.webhook = "hope_jarvis.webhook:app"
 
 [dependency-groups]
 dev = [

@@ -1,17 +1,20 @@
 """CLI entrypoint for HOPE Jarvis."""
 
+import contextlib
+
 import click
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, FilterSelector, MatchValue
 
 from hope_jarvis.config import (
+    get_all_repo_names,
+    get_all_repos,
     get_data_path,
     get_ingestion_chunk_overlap,
     get_ingestion_chunk_size,
     get_qdrant_api_key,
     get_qdrant_collection_name,
     get_qdrant_url,
-    get_repos_config,
 )
 from hope_jarvis.ingestion.chunker import chunk_markdown_file
 from hope_jarvis.ingestion.store import init_qdrant_collection, store_chunks_in_qdrant
@@ -21,7 +24,6 @@ from hope_jarvis.ingestion.sync import find_markdown_files
 @click.group()
 def db():
     """Database management commands."""
-    pass
 
 
 @db.command()
@@ -41,6 +43,7 @@ def update(repos, force):
       jarvis db update -r HOPE            # Update single repo
       jarvis db update -r HOPE -r Aurora  # Update multiple repos
       jarvis db update --force            # Force re-ingestion
+
     """
     if repos:
         msg = f"Updating Qdrant for: {', '.join(repos)}"
@@ -60,21 +63,15 @@ def update(repos, force):
     init_qdrant_collection()
 
     # Get repos to process
-    import yaml
-
-    repos_config_path = get_repos_config()
-    with open(repos_config_path, "r") as f:
-        config = yaml.safe_load(f)
-
     if repos:
         # Filter repos by name
-        repos_to_process = [r for r in config.get("repos", []) if r["name"] in repos]
+        repos_to_process = [r for r in get_all_repos() if r["name"] in repos]
         if not repos_to_process:
             click.echo(f"❌ No matching repos found for: {', '.join(repos)}")
             return
     else:
         # All repos
-        repos_to_process = config.get("repos", [])
+        repos_to_process = list(get_all_repos())
 
     # Process each repo (scan local files, no git pull)
     all_chunks = []
@@ -102,6 +99,24 @@ def update(repos, force):
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
                 branch=repo_config.get("branch", "main"),
+            )
+            all_chunks.extend(chunks)
+
+    # Process knowledge base files
+    knowledge_dir = get_data_path() / "knowledge"
+    if knowledge_dir.exists():
+        click.echo("Processing knowledge base...")
+        for md_file in knowledge_dir.glob("*.md"):
+            click.echo(f"  Processing {md_file.name}...")
+            chunks = chunk_markdown_file(
+                file_path=str(md_file),
+                relative_file_path=str(md_file.relative_to(knowledge_dir)),
+                repo_name="knowledge-base",
+                github_url="",
+                rendered_base_url="",
+                docs_dir="",
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
             )
             all_chunks.extend(chunks)
 
@@ -135,14 +150,11 @@ def reset(repos):
       jarvis db reset                    # Reset entire collection
       jarvis db reset -r HOPE            # Reset single repo
       jarvis db reset -r HOPE -r Aurora  # Reset multiple repos
+
     """
-    import yaml
-
-    from hope_jarvis.config import get_repos_config
-
     qdrant_url = get_qdrant_url()
     collection_name = get_qdrant_collection_name()
-    client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key())
+    client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key(), timeout=60)
 
     if not repos:
         # Reset entire collection
@@ -152,14 +164,10 @@ def reset(repos):
         click.echo("✅ Collection reset complete.")
     else:
         # Reset specific repos
-        repos_config_path = get_repos_config()
-        with open(repos_config_path, "r") as f:
-            config = yaml.safe_load(f)
-
+        all_repo_names = get_all_repo_names()
         for repo_name in repos:
             # Verify repo exists in config
-            repo_found = any(r["name"] == repo_name for r in config.get("repos", []))
-            if not repo_found:
+            if repo_name not in all_repo_names:
                 click.echo(f"⚠️  Repo '{repo_name}' not found in config. Skipping.")
                 continue
 
@@ -167,13 +175,7 @@ def reset(repos):
             client.delete(
                 collection_name=collection_name,
                 points_selector=FilterSelector(
-                    filter=Filter(
-                        must=[
-                            FieldCondition(
-                                key="repo_name", match=MatchValue(value=repo_name)
-                            )
-                        ]
-                    )
+                    filter=Filter(must=[FieldCondition(key="repo_name", match=MatchValue(value=repo_name))])
                 ),
             )
             click.echo(f"✅ Reset complete for repo: {repo_name}")
@@ -184,7 +186,7 @@ def info():
     """Show Qdrant database information."""
     qdrant_url = get_qdrant_url()
     collection_name = get_qdrant_collection_name()
-    client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key())
+    client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key(), timeout=60)
 
     collections = client.get_collections().collections
     collection_names = [c.name for c in collections]
@@ -198,20 +200,14 @@ def info():
     click.echo(f"  Status: {info.status}")
 
     # Handle different Qdrant client versions
-    try:
+    with contextlib.suppress(AttributeError):
         click.echo(f"  Points: {info.points_count}")
-    except AttributeError:
-        pass
 
-    try:
+    with contextlib.suppress(AttributeError):
         click.echo(f"  Vectors: {info.vectors_count}")
-    except AttributeError:
-        pass
 
-    try:
+    with contextlib.suppress(AttributeError):
         click.echo(f"  Indexed: {info.indexed_vectors_count}")
-    except AttributeError:
-        pass
 
     try:
         click.echo(f"  Vector size: {info.config.params.vectors.size}")

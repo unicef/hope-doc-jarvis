@@ -12,9 +12,17 @@ install:
 	uv sync
 	echo  'source .venv/bin/activate' >> .envrc
 
-docker-up:
+
+docker-dev:
+	docker-compose up ollama qdrant
+
+
+docker-clean:
 	docker-compose stop
 	docker-compose rm --force
+
+
+docker-up:
 	docker-compose up --build
 
 run:

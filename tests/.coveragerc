@@ -1,0 +1,32 @@
+[run]
+branch = True
+source = src
+source_pkgs = hope_jarvis
+;relative_files = True
+disable_warnings =
+    CoverageWarning
+    UserWarning
+
+concurrency =
+    thread
+    multiprocessing
+omit =
+    **/~*/*
+    **/~*
+    src/hope_jarvis/version.py
+
+[report]
+exclude_also =
+    pragma: no cover
+    pragma: no-cover
+    def __repr__
+    pass
+
+show_missing = true
+fail_under = 90
+precision = 2
+ignore_errors = True
+skip_covered = True
+
+[html]
+directory = ./~build/coverage

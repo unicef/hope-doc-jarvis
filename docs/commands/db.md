@@ -40,7 +40,7 @@ jarvis db update -r HOPE --force
 3. Generates embeddings
 4. Stores in Qdrant
 
-**Note:** Requires repos to be pulled first with `jarvis pull`.
+**Note:** Requires repos to be synced first with `jarvis repo pull`.
 
 ---
 
@@ -98,7 +98,7 @@ Chunks per repo:
 
 ## Use Cases
 
-- **db update**: After pulling repos with `jarvis pull`, ingest into Qdrant
+- **db update**: Ingest local repo files into Qdrant
 - **db reset**: After repository structure changes, or to start fresh
 - **db info**: Check ingestion status and chunk distribution
 
@@ -106,5 +106,5 @@ Chunks per repo:
 
 `jarvis db reset` (without `-r`) deletes ALL data in the collection. After running it, you'll need to re-ingest with:
 ```bash
-jarvis sync --force
+jarvis repo pull --force
 ```

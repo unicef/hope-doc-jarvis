@@ -1,6 +1,7 @@
 """Query retrieval module."""
 
-from typing import Any, Dict, List
+import logging
+from typing import Any
 
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
@@ -14,6 +15,9 @@ from hope_jarvis.config import (
     get_retrieval_top_k,
 )
 
+# Suppress Hugging Face Hub warnings
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
+
 
 def retrieve_relevant_chunks(
     query: str,
@@ -21,7 +25,7 @@ def retrieve_relevant_chunks(
     collection_name: str = None,
     top_k: int = None,
     score_threshold: float = None,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Retrieve relevant chunks from Qdrant based on query."""
     # Load config if not provided
     if qdrant_url is None or collection_name is None:
@@ -31,7 +35,7 @@ def retrieve_relevant_chunks(
         score_threshold = score_threshold or get_retrieval_score_threshold()
 
     # Initialize clients
-    qdrant_client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key())
+    qdrant_client = QdrantClient(url=qdrant_url, api_key=get_qdrant_api_key(), timeout=60)
     embedding_model = TextEmbedding(model_name=get_embedding_model_name())
 
     # Generate query embedding
@@ -43,10 +47,6 @@ def retrieve_relevant_chunks(
         query=query_embedding,
         limit=top_k,
         score_threshold=score_threshold,
-    )
-
-    print(
-        f"DEBUG: Query returned {len(search_results.points)} results (threshold={score_threshold})"
     )
 
     # Format results, filtering by score threshold if needed

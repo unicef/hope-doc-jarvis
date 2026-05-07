@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from hope_jarvis.ingestion.sync import (
@@ -114,13 +116,13 @@ class TestFindMarkdownFiles:
 class TestCloneOrPullRepo:
     """Test clone_or_pull_repo function."""
 
-    @patch("hope_jarvis.ingestion.sync.get_data_path")
+    @patch("hope_jarvis.ingestion.sync.get_repos_root_path")
     @patch("hope_jarvis.ingestion.sync.Repo")
-    def test_clones_new_repo(self, mock_repo_class, mock_get_data_path, tmp_path):
+    def test_clones_new_repo(self, mock_repo_class, mock_get_repos_root_path, tmp_path):
         """Test cloning a new repository."""
-        data_path = tmp_path / "data"
-        data_path.mkdir()
-        mock_get_data_path.return_value = data_path
+        repos_root = tmp_path / "repos"
+        repos_root.mkdir()
+        mock_get_repos_root_path.return_value = repos_root
 
         with patch.object(Path, "exists", return_value=False):
             clone_or_pull_repo(
@@ -130,15 +132,19 @@ class TestCloneOrPullRepo:
                 }
             )
 
-            mock_repo_class.clone_from.assert_called_once()
+            mock_repo_class.clone_from.assert_called_once_with(
+                "https://github.com/test/repo",
+                str(repos_root / "test-repo"),
+                depth=1,
+            )
 
-    @patch("hope_jarvis.ingestion.sync.get_data_path")
+    @patch("hope_jarvis.ingestion.sync.get_repos_root_path")
     @patch("hope_jarvis.ingestion.sync.Repo")
-    def test_pulls_existing_repo(self, mock_repo_class, mock_get_data_path, tmp_path):
-        """Test pulling an existing repository."""
-        data_path = tmp_path / "data"
-        data_path.mkdir()
-        mock_get_data_path.return_value = data_path
+    def test_pulls_existing_repo(self, mock_repo_class, mock_get_repos_root_path, tmp_path):
+        """Test pulling an existing repository with reset --hard."""
+        repos_root = tmp_path / "repos"
+        repos_root.mkdir()
+        mock_get_repos_root_path.return_value = repos_root
 
         mock_repo = MagicMock()
         mock_repo_class.return_value = mock_repo
@@ -151,6 +157,7 @@ class TestCloneOrPullRepo:
                 }
             )
 
+            mock_repo.git.reset.assert_called_once_with("--hard")
             mock_repo.remotes.origin.pull.assert_called_once()
             assert result is not None
 
@@ -162,9 +169,7 @@ class TestSyncState:
         """Test loading sync state when no file exists."""
         state_path = tmp_path / "sync_state.json"
 
-        with patch(
-            "hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path
-        ):
+        with patch("hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path):
             state = _load_sync_state()
 
             assert state == {}
@@ -175,9 +180,7 @@ class TestSyncState:
         state_data = {"repo/file.md": "hash123"}
         state_path.write_text(json.dumps(state_data))
 
-        with patch(
-            "hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path
-        ):
+        with patch("hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path):
             state = _load_sync_state()
 
             assert state == state_data
@@ -187,9 +190,7 @@ class TestSyncState:
         state_path = tmp_path / "sync_state.json"
         state_data = {"repo/file.md": "hash123"}
 
-        with patch(
-            "hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path
-        ):
+        with patch("hope_jarvis.ingestion.sync.get_sync_state_path", return_value=state_path):
             _save_sync_state(state_data)
 
             loaded = json.loads(state_path.read_text())
@@ -214,9 +215,7 @@ class TestProcessRepo:
             "docs_dir": "docs",
         }
 
-        with patch(
-            "hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)
-        ):
+        with patch("hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)):
             changed = _process_repo(repo_config, sync_state={}, force=False)
 
             assert len(changed) == 1
@@ -240,9 +239,7 @@ class TestProcessRepo:
 
         sync_state = {"test-repo/docs/test.md": "existing_hash"}
 
-        with patch(
-            "hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)
-        ):
+        with patch("hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)):
             changed = _process_repo(repo_config, sync_state=sync_state, force=True)
 
             assert len(changed) == 1
@@ -268,9 +265,7 @@ class TestProcessRepo:
 
         sync_state = {"test-repo/docs/test.md": file_hash}
 
-        with patch(
-            "hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)
-        ):
+        with patch("hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(repo_path)):
             changed = _process_repo(repo_config, sync_state=sync_state, force=False)
 
             assert len(changed) == 0
@@ -283,14 +278,9 @@ class TestProcessRepo:
             "rendered_base_url": "https://test.github.io",
         }
 
-        with patch(
-            "hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(tmp_path)
-        ):
-            try:
+        with patch("hope_jarvis.ingestion.sync.clone_or_pull_repo", return_value=str(tmp_path)):
+            with pytest.raises(ValueError, match="docs_dir"):
                 _process_repo(repo_config, sync_state={}, force=False)
-                assert False, "Should have raised ValueError"
-            except ValueError as e:
-                assert "docs_dir" in str(e)
 
 
 class TestSyncAllRepos:
@@ -298,22 +288,22 @@ class TestSyncAllRepos:
 
     def test_syncs_all_repos(self, tmp_path):
         """Test syncing all repositories."""
-        repos_config_path = tmp_path / "repos.yaml"
-        repos_config_path.write_text("""
-repos:
-  - name: repo1
-    github_url: https://github.com/test/repo1
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/repo1
-""")
+        mock_repos = [
+            {
+                "name": "repo1",
+                "github_url": "https://github.com/test/repo1",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/repo1",
+            }
+        ]
 
         with patch(
-            "hope_jarvis.ingestion.sync.get_repos_config",
-            return_value=repos_config_path,
+            "hope_jarvis.ingestion.sync.get_all_repos",
+            return_value=iter(mock_repos),
         ):
             with patch(
-                "hope_jarvis.ingestion.sync.get_data_path",
-                return_value=tmp_path / "data",
+                "hope_jarvis.ingestion.sync.get_repos_root_path",
+                return_value=tmp_path / "repos",
             ):
                 with patch(
                     "hope_jarvis.ingestion.sync.get_sync_state_path",
@@ -333,18 +323,20 @@ repos:
 
     def test_syncs_multiple_repos(self, tmp_path):
         """Test syncing multiple repositories."""
-        repos_config_path = tmp_path / "repos.yaml"
-        repos_config_path.write_text("""
-repos:
-  - name: repo1
-    github_url: https://github.com/test/repo1
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/repo1
-  - name: repo2
-    github_url: https://github.com/test/repo2
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/repo2
-""")
+        mock_repos = [
+            {
+                "name": "repo1",
+                "github_url": "https://github.com/test/repo1",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/repo1",
+            },
+            {
+                "name": "repo2",
+                "github_url": "https://github.com/test/repo2",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/repo2",
+            },
+        ]
 
         repo1_docs = tmp_path / "data" / "repo1" / "docs"
         repo1_docs.mkdir(parents=True)
@@ -355,11 +347,11 @@ repos:
         (repo2_docs / "test.md").write_text("# Test")
 
         with patch(
-            "hope_jarvis.ingestion.sync.get_repos_config",
-            return_value=repos_config_path,
+            "hope_jarvis.ingestion.sync.get_all_repos",
+            return_value=iter(mock_repos),
         ):
             with patch(
-                "hope_jarvis.ingestion.sync.get_data_path",
+                "hope_jarvis.ingestion.sync.get_repos_root_path",
                 return_value=tmp_path / "data",
             ):
                 with patch(
@@ -378,26 +370,28 @@ class TestSyncRepoByName:
 
     def test_syncs_specific_repo(self, tmp_path):
         """Test syncing a specific repository by name."""
-        repos_config_path = tmp_path / "repos.yaml"
-        repos_config_path.write_text("""
-repos:
-  - name: HOPE
-    github_url: https://github.com/test/hope
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/hope
-  - name: AURORA
-    github_url: https://github.com/test/aurora
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/aurora
-""")
+        mock_repos = [
+            {
+                "name": "HOPE",
+                "github_url": "https://github.com/test/hope",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/hope",
+            },
+            {
+                "name": "AURORA",
+                "github_url": "https://github.com/test/aurora",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/aurora",
+            },
+        ]
 
         with patch(
-            "hope_jarvis.ingestion.sync.get_repos_config",
-            return_value=repos_config_path,
+            "hope_jarvis.ingestion.sync.get_all_repos",
+            return_value=iter(mock_repos),
         ):
             with patch(
-                "hope_jarvis.ingestion.sync.get_data_path",
-                return_value=tmp_path / "data",
+                "hope_jarvis.ingestion.sync.get_repos_root_path",
+                return_value=tmp_path / "repos",
             ):
                 with patch(
                     "hope_jarvis.ingestion.sync.get_sync_state_path",
@@ -417,22 +411,22 @@ repos:
 
     def test_returns_empty_for_nonexistent_repo(self, tmp_path):
         """Test that empty list is returned for non-existent repo."""
-        repos_config_path = tmp_path / "repos.yaml"
-        repos_config_path.write_text("""
-repos:
-  - name: HOPE
-    github_url: https://github.com/test/hope
-    docs_dir: docs
-    rendered_base_url: https://test.github.io/hope
-""")
+        mock_repos = [
+            {
+                "name": "HOPE",
+                "github_url": "https://github.com/test/hope",
+                "docs_dir": "docs",
+                "rendered_base_url": "https://test.github.io/hope",
+            }
+        ]
 
         with patch(
-            "hope_jarvis.ingestion.sync.get_repos_config",
-            return_value=repos_config_path,
+            "hope_jarvis.ingestion.sync.get_all_repos",
+            return_value=iter(mock_repos),
         ):
             with patch(
-                "hope_jarvis.ingestion.sync.get_data_path",
-                return_value=tmp_path / "data",
+                "hope_jarvis.ingestion.sync.get_repos_root_path",
+                return_value=tmp_path / "repos",
             ):
                 with patch(
                     "hope_jarvis.ingestion.sync.get_sync_state_path",

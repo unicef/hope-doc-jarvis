@@ -1,43 +1,45 @@
 x-variables: &variables
-  QDRANT_API_KEY: ${QDRANT_API_KEY:-123}
-  QDRANT_HTTP_PORT: ${QDRANT_HTTP_PORT:-6333}
-  QDRANT_GRPC_PORT: ${QDRANT_GRPC_PORT:-6334}
-  OLLAMA_PORT: ${OLLAMA_PORT:-11434}
+  QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+  QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME:-hope_docs}
+  QDRANT_PROTOCOL: ${QDRANT_PROTOCOL:-grpc}
+#  QDRANT_HTTP_PORT: ${QDRANT_HTTP_PORT:-6333}
+#  QDRANT_GRPC_PORT: ${QDRANT_GRPC_PORT:-6334}
+#  OLLAMA_PORT: ${OLLAMA_PORT:-11434}
   OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
   OLLAMA_TEMPERATURE: ${OLLAMA_TEMPERATURE:-0.1}
   OLLAMA_STREAMING: ${OLLAMA_STREAMING:-true}
   OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}
   OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MAX_LOADED_MODELS:-1}
-  QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME:-hope_docs}
+  RETRIEVAL_SCORE_THRESHOLD: ${RETRIEVAL_SCORE_THRESHOLD:-0.7}
   EMBEDDING_VECTOR_SIZE: ${EMBEDDING_VECTOR_SIZE:-384}
   SENTRY_DSN: ${SENTRY_DSN:-}
   ENVIRONMENT: ${ENVIRONMENT:-production}
+#  HF_HUB_DISABLE_TELEMETRY: ${HF_HUB_DISABLE_TELEMETRY:-0}
 
 services:
   ollama:
-    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    image: ollama/ollama:latest
     container_name: hope-ollama
     ports:
-      - "${OLLAMA_PORT:-11434}:11434"
+      - "11434:11434"
     volumes:
-      - ${OLLAMA_DATA:-./~DATA/ollama_data}:/root/.ollama
+      - ${OLLAMA_VOLUME}:/root/.ollama
     environment:
       <<: *variables
     entrypoint: ["/bin/sh", "-c"]
-    command: ["ollama serve & sleep 5 && ollama pull ${OLLAMA_MODEL:-llama3.1:8b} && wait"]
+    command: ["ollama serve & sleep 5 && ollama pull ${OLLAMA_MODEL} && wait"]
     restart: unless-stopped
 
   qdrant:
-    image: ${QDRANT_IMAGE:-qdrant/qdrant:latest}
+    image: qdrant/qdrant:latest
     container_name: hope-qdrant
     ports:
-      - "${QDRANT_HTTP_PORT:-6333}:6333"
-      - "${QDRANT_GRPC_PORT:-6334}:6334"
+      - "6333:6333"
+      - "6334:6334"
     volumes:
-      - ${QDRANT_DATA:-./~DATA/qdrant_data}:/qdrant/storage
+      - ${QDRANT_VOLUME}:/qdrant/storage
     environment:
       <<: *variables
-      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-123}
     restart: unless-stopped
 
   app:
@@ -52,8 +54,7 @@ services:
     volumes:
       - ./docker/app:/jarvis/app
       - ./src:/jarvis/src
-      - ./~DATA/data:/data
-      - ${HF_CACHE:-./~DATA/hf_cache}:/root/.cache/huggingface
+      - ${JARVIS_VOLUME}:/data/
     depends_on:
       - ollama
       - qdrant
@@ -61,16 +62,21 @@ services:
       <<: *variables
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
-      OLLAMA_BASE_URL: http://ollama:${OLLAMA_PORT:-11434}
-      QDRANT_URL: http://qdrant:${QDRANT_HTTP_PORT:-6333}
-      EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
-      RETRIEVAL_TOP_K: 5
-      RETRIEVAL_SCORE_THRESHOLD: 0.5
-      INGESTION_CHUNK_SIZE: 1000
-      INGESTION_CHUNK_OVERLAP: 200
-      CONFIG_PATH: /jarvis/app/config
-      DATA_PATH: /data
-      WEBHOOK_TOKEN: ${WEBHOOK_TOKEN:-}
-      SENTRY_DSN: ${SENTRY_DSN:-}
-      ENVIRONMENT: ${ENVIRONMENT:-production}
+      OLLAMA_HOST: ollama
+      QDRANT_HOST: qdrant
+#      OLLAMA_BASE_URL: http://ollama:11434
+#      QDRANT_URL: http://qdrant:6333
+#      EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+#      RETRIEVAL_TOP_K: 5
+#      RETRIEVAL_SCORE_THRESHOLD: ${RETRIEVAL_SCORE_THRESHOLD:-0.2}
+#      INGESTION_CHUNK_SIZE: 1000
+#      INGESTION_CHUNK_OVERLAP: 200
+#      CONFIG_PATH: /jarvis/app/config
+#      DATA_DIR: /storage/repos/
+#      HF_HUB_CACHE: /storage/huggingface
+#      WEBHOOK_TOKEN: ${WEBHOOK_TOKEN:-}
+#      SENTRY_DSN: ${SENTRY_DSN:-}
+#      ENVIRONMENT: ${ENVIRONMENT:-production}
+#      HF_HOME: /root/.cache/huggingface
+#      HF_HUB_DISABLE_TELEMETRY: "1"
     restart: unless-stopped

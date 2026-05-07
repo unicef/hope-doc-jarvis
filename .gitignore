@@ -5,7 +5,7 @@
 !.github
 !.gitignore
 !.dockerignore
-!docker/*
-!docker/app/.chainlit/**
+!docker/app/**/*
+!.coveragerc
 src/hope_jarvis/version.py
 coverage.xml
